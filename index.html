@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charter Certificate Creator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron&family=Great+Vibes&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Screen styles */
+        #certificate-container.hidden {
+            display: none;
+        }
+        @media (max-width: 640px) {
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .button-container button {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-blue-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+    <header class="mb-8">
+        <h1 class="text-5xl font-bold" style="font-family: 'Orbitron', sans-serif;">Charter Certificate Creator</h1>
+    </header>
+    <main class="w-full max-w-md">
+        <form id="name-form" class="bg-blue-800 p-6 rounded-lg shadow-lg">
+            <label for="name" class="block text-sm font-bold mb-2">Enter your name:</label>
+            <input type="text" id="name" name="name" required class="w-full p-2 rounded bg-white text-blue-900">
+            <button type="submit" class="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Generate Certificate</button>
+        </form>
+    </main>
+    <div id="certificate-container" class="mt-8 md:max-w-4xl mx-auto border-4 border-white p-4 rounded-lg bg-blue-800 hidden">
+        <img id="certificate-img" alt="Generated Certificate" class="max-w-full h-auto">
+        <div class="button-container mt-4 flex flex-row space-x-4">
+            <button id="print-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Print Certificate</button>
+            <button id="create-another-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Create Another</button>
+        </div>
+    </div>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <script>
+        const form = document.getElementById('name-form');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const imgElement = document.getElementById('certificate-img');
+        const certificateContainer = document.getElementById('certificate-container');
+        const printBtn = document.getElementById('print-btn');
+        const createAnotherBtn = document.getElementById('create-another-btn');
+        const nameInput = document.getElementById('name');
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            try {
+                await document.fonts.load('125px "Great Vibes"');
+                console.log('"Great Vibes" font loaded successfully');
+            } catch (error) {
+                console.error('Font loading failed:', error);
+            }
+
+            const img = new Image();
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                ctx.font = '125px "Great Vibes"';
+                ctx.fillStyle = 'black';
+                const x = 1814; // Adjust based on your template
+                const y = 979;  // Adjust based on your template
+                const textWidth = ctx.measureText(name).width;
+                const centeredX = x - (textWidth / 2);
+                ctx.fillText(name, centeredX, y);
+                const dataUrl = canvas.toDataURL('image/png');
+                imgElement.src = dataUrl;
+                certificateContainer.classList.remove('hidden');
+            };
+            img.src = 'New_certificate_template.png'; // Ensure this path is correct
+        });
+
+        printBtn.addEventListener('click', function() {
+            // Open a new window for printing
+            const printWindow = window.open('', '_blank');
+            
+            // Write HTML and CSS to the new window
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Print Certificate</title>
+                        <style>
+                            @media print {
+                                @page {
+                                    size: landscape;
+                                    margin: 0;
+                                }
+                            }
+                            body {
+                                margin: 0;
+                                padding: 0;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                width: 100vw;
+                            }
+                            img {
+                                max-width: 100%;
+                                max-height: 100%;
+                                display: block;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <img src="${imgElement.src}" alt="Certificate">
+                    </body>
+                </html>
+            `);
+            
+            // Close the document stream and trigger printing
+            printWindow.document.close();
+            printWindow.print();
+        });
+
+        createAnotherBtn.addEventListener('click', function() {
+            nameInput.value = '';
+            certificateContainer.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
